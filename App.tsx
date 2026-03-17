@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [services, setServices] = useState<ServiceRecord[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceRecord | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRealtimeActive, setIsRealtimeActive] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
@@ -154,29 +155,62 @@ const App: React.FC = () => {
     XLSX.writeFile(workbook, `servicos_wilker_${dateStr}.xlsx`);
   };
 
-  const addService = async (data: Omit<ServiceRecord, 'id'>) => {
-    const newId = crypto.randomUUID();
-    const newService = { ...data, id: newId };
-    
-    setServices(prev => [newService, ...prev]);
-    setIsFormOpen(false);
+  const saveService = async (data: Omit<ServiceRecord, 'id'>) => {
+    if (editingService) {
+      // Atualizar existente
+      const updatedService = { ...data, id: editingService.id };
+      setServices(prev => prev.map(s => s.id === editingService.id ? updatedService : s));
+      setIsFormOpen(false);
+      setEditingService(null);
 
-    if (user && online && supabase && isSupabaseConfigured) {
-      try {
-        const { error } = await supabase.from('services').insert([{
-          id: newId,
-          client_name: data.clientName,
-          description: data.description,
-          value: data.value,
-          payment_method: data.paymentMethod,
-          date: data.date,
-          user_id: user.id
-        }]);
-        if (error) throw error;
-      } catch (err) {
-        console.error('Erro ao enviar para nuvem:', err);
+      if (user && online && supabase && isSupabaseConfigured) {
+        try {
+          const { error } = await supabase
+            .from('services')
+            .update({
+              client_name: data.clientName,
+              description: data.description,
+              value: data.value,
+              payment_method: data.paymentMethod,
+              date: data.date
+            })
+            .eq('id', editingService.id);
+          if (error) throw error;
+        } catch (err) {
+          console.error('Erro ao atualizar na nuvem:', err);
+          fetchServices();
+        }
+      }
+    } else {
+      // Adicionar novo
+      const newId = crypto.randomUUID();
+      const newService = { ...data, id: newId };
+      
+      setServices(prev => [newService, ...prev]);
+      setIsFormOpen(false);
+
+      if (user && online && supabase && isSupabaseConfigured) {
+        try {
+          const { error } = await supabase.from('services').insert([{
+            id: newId,
+            client_name: data.clientName,
+            description: data.description,
+            value: data.value,
+            payment_method: data.paymentMethod,
+            date: data.date,
+            user_id: user.id
+          }]);
+          if (error) throw error;
+        } catch (err) {
+          console.error('Erro ao enviar para nuvem:', err);
+        }
       }
     }
+  };
+
+  const handleEdit = (service: ServiceRecord) => {
+    setEditingService(service);
+    setIsFormOpen(true);
   };
 
   const deleteService = async (id: string) => {
@@ -294,19 +328,31 @@ const App: React.FC = () => {
               <p className="text-[10px] font-black uppercase tracking-[0.3em]">Lista vazia</p>
             </div>
           ) : (
-            <ServiceList services={services} onDelete={deleteService} />
+            <ServiceList services={services} onDelete={deleteService} onEdit={handleEdit} />
           )}
         </div>
       </main>
 
       <button
-        onClick={() => setIsFormOpen(true)}
+        onClick={() => {
+          setEditingService(null);
+          setIsFormOpen(true);
+        }}
         className="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-500/40 active:scale-90 hover:scale-110 transition-all z-50 ring-4 ring-[#020617]"
       >
         <Plus size={32} strokeWidth={2.5} />
       </button>
 
-      {isFormOpen && <ServiceForm onClose={() => setIsFormOpen(false)} onSubmit={addService} />}
+      {isFormOpen && (
+        <ServiceForm 
+          onClose={() => {
+            setIsFormOpen(false);
+            setEditingService(null);
+          }} 
+          onSubmit={saveService}
+          initialData={editingService || undefined}
+        />
+      )}
     </div>
   );
 };

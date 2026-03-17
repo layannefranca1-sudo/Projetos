@@ -6,10 +6,20 @@ import { ServiceRecord, PaymentMethod } from '../types';
 interface ServiceFormProps {
   onClose: () => void;
   onSubmit: (data: Omit<ServiceRecord, 'id'>) => void;
+  initialData?: ServiceRecord;
 }
 
-const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit }) => {
+const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState(() => {
+    if (initialData) {
+      return {
+        clientName: initialData.clientName,
+        description: initialData.description,
+        value: initialData.value.toString(),
+        paymentMethod: initialData.paymentMethod,
+        date: initialData.date
+      };
+    }
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -35,7 +45,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit }) => {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
       <div className="w-full max-w-lg bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/50">
-          <h2 className="text-xl font-bold">Novo Serviço</h2>
+          <h2 className="text-xl font-bold">{initialData ? 'Editar Serviço' : 'Novo Serviço'}</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
             <X size={20} />
           </button>
@@ -116,7 +126,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit }) => {
             type="submit"
             className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 transition-all active:scale-95"
           >
-            Cadastrar Serviço
+            {initialData ? 'Salvar Alterações' : 'Cadastrar Serviço'}
             <ChevronRight size={18} />
           </button>
         </form>

@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { Trash2, CalendarDays, Wallet } from 'lucide-react';
+import { Trash2, CalendarDays, Wallet, Pencil } from 'lucide-react';
 import { ServiceRecord, MonthlyGroup } from '../types';
 
 interface ServiceListProps {
   services: ServiceRecord[];
   onDelete: (id: string) => void;
+  onEdit: (service: ServiceRecord) => void;
 }
 
-const ServiceList: React.FC<ServiceListProps> = ({ services, onDelete }) => {
+const ServiceList: React.FC<ServiceListProps> = ({ services, onDelete, onEdit }) => {
   const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
@@ -66,19 +67,34 @@ const ServiceList: React.FC<ServiceListProps> = ({ services, onDelete }) => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-end justify-between min-h-[85px] shrink-0">
-                    <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDelete(service.id);
-                      }} 
-                      className="p-3 text-slate-500 hover:text-red-400 transition-all bg-white/5 hover:bg-red-500/10 rounded-2xl border border-white/5 active:scale-75 shadow-lg group-hover:border-red-500/20"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                  <div className="flex flex-col items-end justify-between min-h-[85px] shrink-0 gap-2">
+                    <div className="flex gap-2">
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEdit(service);
+                        }} 
+                        className="p-3 text-slate-500 hover:text-blue-400 transition-all bg-white/5 hover:bg-blue-500/10 rounded-2xl border border-white/5 active:scale-75 shadow-lg group-hover:border-blue-500/20"
+                        aria-label="Editar"
+                      >
+                        <Pencil size={18} />
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDelete(service.id);
+                        }} 
+                        className="p-3 text-slate-500 hover:text-red-400 transition-all bg-white/5 hover:bg-red-500/10 rounded-2xl border border-white/5 active:scale-75 shadow-lg group-hover:border-red-500/20"
+                        aria-label="Excluir"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                     
                     <p className="text-xl font-black text-white tracking-tighter mt-auto">
                       {service.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
