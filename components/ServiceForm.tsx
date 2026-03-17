@@ -12,14 +12,22 @@ interface ServiceFormProps {
 const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState(() => {
     if (initialData) {
+      // Garantir que a data seja sempre uma string YYYY-MM-DD (primeiros 10 caracteres)
+      // Isso evita que o input type="date" interprete errado ou adicione fuso horário
+      const dateValue = typeof initialData.date === 'string' 
+        ? initialData.date.slice(0, 10) 
+        : '';
+
       return {
         clientName: initialData.clientName,
         description: initialData.description,
         value: initialData.value.toString(),
         paymentMethod: initialData.paymentMethod,
-        date: initialData.date
+        date: dateValue
       };
     }
+    
+    // Para novos registros, usar a data local do sistema no formato YYYY-MM-DD
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -35,6 +43,9 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSubmit, initialDat
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // O valor de formData.date já é a string "YYYY-MM-DD" vinda diretamente do input.
+    // Enviamos exatamente essa string para o onSubmit, sem nenhuma conversão para Date ou toISOString().
     onSubmit({
       ...formData,
       value: parseFloat(formData.value) || 0
