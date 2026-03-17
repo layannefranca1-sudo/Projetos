@@ -115,7 +115,7 @@ const App: React.FC = () => {
           description: item.description,
           value: item.value,
           paymentMethod: item.payment_method,
-          date: item.date
+          date: (item.date as string).slice(0, 10)
         }));
         setServices(mappedData);
       }
