@@ -172,7 +172,7 @@ const App: React.FC = () => {
               description: data.description,
               value: data.value,
               payment_method: data.paymentMethod,
-              date: data.date
+              date: data.date.slice(0, 10)
             })
             .eq('id', editingService.id);
           if (error) throw error;
@@ -197,7 +197,7 @@ const App: React.FC = () => {
             description: data.description,
             value: data.value,
             payment_method: data.paymentMethod,
-            date: data.date,
+            date: data.date.slice(0, 10),
             user_id: user.id
           }]);
           if (error) throw error;
