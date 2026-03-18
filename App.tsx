@@ -57,36 +57,25 @@ const App: React.FC = () => {
     if (!user) return;
 
     const userStorageKey = `${BASE_STORAGE_KEY}${user.id}`;
-    const saved = localStorage.getItem(userStorageKey);
-    if (saved) {
-      setServices(JSON.parse(saved));
-    }
 
-    if (!supabase || !isSupabaseConfigured || !online) return;
+    if (!supabase || !isSupabaseConfigured || !online) {
+      const saved = localStorage.getItem(userStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const fixed = parsed.map((s: any) => ({ ...s, date: s.date.slice(0, 10) }));
+        setServices(fixed);
+      }
+      return;
+    }
 
     fetchServices();
 
     const channel = supabase
       .channel(`sync-user-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'services',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          fetchServices();
-        }
-      )
-      .subscribe((status) => {
-        setIsRealtimeActive(status === 'SUBSCRIBED');
-      });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services', filter: `user_id=eq.${user.id}` }, () => { fetchServices(); })
+      .subscribe((status) => { setIsRealtimeActive(status === 'SUBSCRIBED'); });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user, online]);
 
   // 3. Persistir Cache Local
